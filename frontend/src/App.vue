@@ -1,7 +1,8 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <HelloWorld />
+  <RouterView />
+  <RecipeModal />   <!-- global modal, rendered once at root -->
 </template>
+
+<script setup>
+import RecipeModal from './components/RecipeModal.vue'
+</script>

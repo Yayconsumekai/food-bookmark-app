@@ -10,7 +10,6 @@ from app.models.recipe import Recipe
 
 router = APIRouter(prefix="/api/search", tags=["search"])
 
-
 @router.get("/")
 def search(
     q:      str            = Query(..., min_length=1),
@@ -40,6 +39,20 @@ def get_recipe(
 ):
     recipe = db.query(Recipe).filter(Recipe.id == recipe_id).first()
     if not recipe:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Recipe not found")
-    return recipe
+
+    # Build the response manually so validators fire correctly
+    detail = RecipeDetail(
+        id           = recipe.id,
+        name         = recipe.name,
+        image_url    = recipe.image_url,
+        category     = recipe.category,
+        rating       = recipe.rating,
+        total_time   = recipe.total_time,
+        calories     = recipe.calories,
+        description  = recipe.description,
+        keywords     = recipe.keywords,
+        ingredients  = recipe.ingredients,
+        instructions = recipe.instructions,
+    )
+    return detail
