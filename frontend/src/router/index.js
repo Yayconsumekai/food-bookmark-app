@@ -4,6 +4,7 @@ import LoginView    from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import HomeView     from '../views/HomeView.vue'  // we'll build this in Step 7
 import SearchView from '../views/SearchView.vue'
+import BookmarksView from '../views/BookmarksView.vue'
 
 const routes = [
   { path: '/login',    component: LoginView },
@@ -16,6 +17,11 @@ const routes = [
   {
     path: '/search',
     component: SearchView,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/bookmarks',
+    component: BookmarksView,
     meta: { requiresAuth: true },
   },
 ]

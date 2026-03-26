@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, search
+from app.api import auth, search, folders, bookmarks
 
 app = FastAPI(title="Food Bookmark API")
 
@@ -14,6 +14,8 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(search.router)
+app.include_router(folders.router)
+app.include_router(bookmarks.router)
 
 @app.get("/health")
 def health():
