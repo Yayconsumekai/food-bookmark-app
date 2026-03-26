@@ -36,10 +36,13 @@
                 <!-- Title row -->
                 <div class="modal-title-row">
                   <h2 class="modal-title">{{ recipe.selectedRecipe.name }}</h2>
-                  <!-- Bookmark button — wired in Step 6 -->
-                  <button class="btn-bookmark" title="Bookmark this recipe">
-                    🔖 Save
-                  </button>
+                  <button
+                    class="btn-bookmark"
+                    :class="{ bookmarked: isBookmarked }"
+                    @click="showBookmarkDialog = true"
+                    >
+                    {{ isBookmarked ? '✅ Saved' : '🔖 Save' }}
+                    </button>
                 </div>
   
                 <!-- Meta pills -->
@@ -109,36 +112,51 @@
         </div>
       </Transition>
     </Teleport>
+
+    <BookmarkDialog
+    :open="showBookmarkDialog"
+    :recipe-id="recipe.selectedRecipe?.id"
+    :recipe-name="recipe.selectedRecipe?.name"
+    @close="showBookmarkDialog = false"
+    @saved="onSaved"
+    />
   </template>
   
   <script setup>
-  import { computed, onMounted, onUnmounted } from 'vue'
-  import { useRecipeStore } from '../stores/recipe'
-  
-  const recipe = useRecipeStore()
-  
-  // Parse keyword string into array
-  const keywordList = computed(() => {
-    const kw = recipe.selectedRecipe?.keywords
-    if (!kw) return []
-    return kw.split(/\s+/).filter(Boolean).slice(0, 10)
-  })
-  
-  // Close modal on Escape key
-  function onKeydown(e) {
-    if (e.key === 'Escape') recipe.closeRecipe()
-  }
-  
-  // Lock body scroll when modal is open
-  onMounted(()  => {
-    window.addEventListener('keydown', onKeydown)
-    document.body.style.overflow = 'hidden'
-  })
-  onUnmounted(() => {
-    window.removeEventListener('keydown', onKeydown)
-    document.body.style.overflow = ''
-  })
-  </script>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRecipeStore }   from '../stores/recipe'
+import { useBookmarkStore } from '../stores/bookmark'
+import BookmarkDialog       from './BookmarkDialog.vue'
+
+const recipe             = useRecipeStore()
+const bookmarks          = useBookmarkStore()
+const showBookmarkDialog = ref(false)
+
+const isBookmarked = computed(() =>
+  recipe.selectedRecipe
+    ? bookmarks.isBookmarked(recipe.selectedRecipe.id)
+    : false
+)
+
+function onSaved() {
+  showBookmarkDialog.value = false
+}
+
+// Fetch all bookmarks on mount so isBookmarked works correctly
+onMounted(() => bookmarks.fetchAll())
+
+function onKeydown(e) {
+  if (e.key === 'Escape') recipe.closeRecipe()
+}
+onMounted(()  => {
+  window.addEventListener('keydown', onKeydown)
+  document.body.style.overflow = 'hidden'
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  document.body.style.overflow = ''
+})
+</script>
   
   <style scoped>
   /* ── Backdrop ─────────────────────────────────────────── */
