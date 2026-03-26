@@ -83,3 +83,7 @@ x86/
 
 # Publish Web Output
 *.[Pp]ublish.xml
+
+# Data
+data/
+*.csv
