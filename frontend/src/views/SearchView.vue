@@ -7,36 +7,42 @@
         </p>
       </div>
   
-      <!-- Loading skeleton -->
       <div v-if="search.loading" class="card-grid">
         <div v-for="n in 8" :key="n" class="skeleton-card" />
       </div>
   
-      <!-- Results grid -->
       <div v-else-if="search.results.length" class="card-grid">
         <RecipeCard
-          v-for="recipe in search.results"
-          :key="recipe.id"
-          :recipe="recipe"
-          @select="selectedRecipe = recipe"
+          v-for="r in search.results"
+          :key="r.id"
+          :recipe="r"
+          @select="openRecipe(r.id)"
         />
       </div>
   
-      <!-- Empty state -->
       <div v-else-if="search.query && !search.loading" class="empty-state">
-        <p>No results found for <strong>"{{ search.query }}"</strong>. Try different keywords.</p>
+        <p>No results found for <strong>"{{ search.query }}"</strong>.</p>
       </div>
+  
+      <!-- Modal lives here, renders via Teleport to body -->
+      <RecipeModal />                       <!-- ← add this -->
     </div>
   </template>
   
   <script setup>
-  import { ref } from 'vue'
-  import SearchBar  from '../components/SearchBar.vue'
-  import RecipeCard from '../components/RecipeCard.vue'
-  import { useSearchStore } from '../stores/search'
-  
-  const search         = useSearchStore()
-  const selectedRecipe = ref(null)   // we'll wire this to a modal in Step 5
+    import { ref } from 'vue'
+    import { useSearchStore } from '../stores/search'
+    import { useRecipeStore }  from '../stores/recipe'
+    import SearchBar           from '../components/SearchBar.vue'
+    import RecipeCard          from '../components/RecipeCard.vue'
+    import RecipeModal         from '../components/RecipeModal.vue'
+
+    const search         = useSearchStore()
+    const recipe = useRecipeStore()
+
+    function openRecipe(id) {
+        recipe.fetchRecipe(id)
+    }
   </script>
   
   <style scoped>
