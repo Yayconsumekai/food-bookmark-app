@@ -23,9 +23,6 @@
       <div v-else-if="search.query && !search.loading" class="empty-state">
         <p>No results found for <strong>"{{ search.query }}"</strong>.</p>
       </div>
-  
-      <!-- Modal lives here, renders via Teleport to body -->
-      <RecipeModal />                       <!-- ← add this -->
     </div>
   </template>
   
@@ -35,9 +32,8 @@
     import { useRecipeStore }  from '../stores/recipe'
     import SearchBar           from '../components/SearchBar.vue'
     import RecipeCard          from '../components/RecipeCard.vue'
-    import RecipeModal         from '../components/RecipeModal.vue'
 
-    const search         = useSearchStore()
+    const search = useSearchStore()
     const recipe = useRecipeStore()
 
     function openRecipe(id) {
