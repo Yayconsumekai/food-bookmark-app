@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth'
 import LoginView    from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import HomeView     from '../views/HomeView.vue'  // we'll build this in Step 7
+import SearchView from '../views/SearchView.vue'
 
 const routes = [
   { path: '/login',    component: LoginView },
@@ -11,6 +12,11 @@ const routes = [
     path: '/',
     component: HomeView,
     meta: { requiresAuth: true },   // ← protected route
+  },
+  {
+    path: '/search',
+    component: SearchView,
+    meta: { requiresAuth: true },
   },
 ]
 
