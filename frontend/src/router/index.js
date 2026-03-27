@@ -2,29 +2,19 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import LoginView    from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import HomeView     from '../views/HomeView.vue'  // we'll build this in Step 7
-import SearchView from '../views/SearchView.vue'
+import HomeView      from '../views/HomeView.vue'
+import SearchView    from '../views/SearchView.vue'
 import BookmarksView from '../views/BookmarksView.vue'
+import LoginView     from '../views/LoginView.vue'
+import RegisterView  from '../views/RegisterView.vue'
 
 const routes = [
-  { path: '/login',    component: LoginView },
-  { path: '/register', component: RegisterView },
-  {
-    path: '/',
-    component: HomeView,
-    meta: { requiresAuth: true },   // ← protected route
-  },
-  {
-    path: '/search',
-    component: SearchView,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: '/bookmarks',
-    component: BookmarksView,
-    meta: { requiresAuth: true },
-  },
-]
+    { path: '/login',     component: LoginView },
+    { path: '/register',  component: RegisterView },
+    { path: '/',          component: HomeView,      meta: { requiresAuth: true } },
+    { path: '/search',    component: SearchView,    meta: { requiresAuth: true } },
+    { path: '/bookmarks', component: BookmarksView, meta: { requiresAuth: true } },
+  ]
 
 const router = createRouter({
   history: createWebHistory(),
