@@ -73,8 +73,14 @@
               </button>
             </div>
           </div>
+            <FolderSuggestions
+            v-if="activeFolderId"
+            :suggestions="recommendations.suggestions"
+            :loading="recommendations.suggestLoading"
+            @refresh="loadSuggestions"
+            @select="openRecipe"
+            />
         </main>
-  
       </div>
     </div>
   </template>
@@ -85,9 +91,12 @@
   import { useRecipeStore }   from '../stores/recipe'
   import FolderManager        from '../components/FolderManager.vue'
   import StarRating           from '../components/StarRating.vue'
+  import { useRecommendationStore } from '../stores/recommendations'
+  import FolderSuggestions          from '../components/FolderSuggestions.vue'
   
   const bookmarks       = useBookmarkStore()
   const recipe          = useRecipeStore()
+  const recommendations = useRecommendationStore()
   
   const activeFolderId   = ref(null)
   const activeFolderName = ref('')
@@ -113,7 +122,14 @@
     activeFolderId.value   = folder.id
     activeFolderName.value = folder.name
     await bookmarks.fetchByFolder(folder.id)
+    await recommendations.fetchFolderSuggestions(folder.id)   // ← add this
   }
+
+  async function loadSuggestions() {
+  if (activeFolderId.value) {
+    await recommendations.fetchFolderSuggestions(activeFolderId.value)
+  }
+}
   
   async function removeBookmark(id) {
     if (confirm('Remove this bookmark?')) {
