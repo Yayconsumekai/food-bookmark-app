@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, Float, ARRAY
-from sqlalchemy.dialects.postgresql import TSVECTOR
 from app.database import Base
+import os
 
 class Recipe(Base):
     __tablename__ = "recipes"
@@ -17,5 +17,9 @@ class Recipe(Base):
     total_time      = Column(String)
     calories        = Column(Float)
 
-    # Full-text search vector — PostgreSQL built-in IR
-    search_vector   = Column(TSVECTOR)
+    # Full-text search vector — use Text for SQLite (testing), TSVECTOR for PostgreSQL
+    if os.getenv("TESTING"):
+        search_vector = Column(Text)
+    else:
+        from sqlalchemy.dialects.postgresql import TSVECTOR
+        search_vector = Column(TSVECTOR)
