@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles        # ← add
 from app.api import auth, search, folders, bookmarks, recommendations
 from app.database import SessionLocal
 from app.services.ml_suggestion_service import _build_tfidf_corpus
+from app.middleware.cache_headers import CacheHeaderMiddleware
 import logging
 import os
 
@@ -19,6 +20,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(CacheHeaderMiddleware)
 
 # Serve cached images as static files
 os.makedirs("static/images", exist_ok=True)
