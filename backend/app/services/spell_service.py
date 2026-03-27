@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from typing import Optional
 import re
 
 # In-memory vocabulary cache — built once on first request
