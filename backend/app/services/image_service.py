@@ -5,10 +5,11 @@ import logging
 from pathlib import Path
 from PIL import Image
 import io
+import os
 
 logger     = logging.getLogger(__name__)
 CACHE_DIR  = Path("static/images")
-BASE_URL   = "http://localhost:8000/static/images"
+BASE_URL = os.getenv("IMAGE_BASE_URL", "http://localhost:8000/static/images")
 
 # Sizes to generate
 SIZES = {
