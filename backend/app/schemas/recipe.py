@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 import re
 
@@ -11,8 +11,7 @@ class RecipeCard(BaseModel):
     total_time:  Optional[str]
     calories:    Optional[float]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class RecipeDetail(RecipeCard):
     description:       Optional[str]
@@ -20,7 +19,6 @@ class RecipeDetail(RecipeCard):
     ingredients_list:  List[str] = []
     instructions_list: List[str] = []
 
-    # Raw DB fields — we parse them into lists
     ingredients:  Optional[str] = None
     instructions: Optional[str] = None
 
@@ -30,7 +28,6 @@ class RecipeDetail(RecipeCard):
         raw = info.data.get('ingredients', '')
         if not raw:
             return []
-        # Split on comma or multiple spaces
         parts = re.split(r',\s*|\s{2,}', raw.strip())
         return [p.strip() for p in parts if p.strip()]
 
@@ -40,6 +37,5 @@ class RecipeDetail(RecipeCard):
         raw = info.data.get('instructions', '')
         if not raw:
             return []
-        # Split on numbered steps or double spaces
         parts = re.split(r'\d+\.\s+|\s{2,}', raw.strip())
         return [p.strip() for p in parts if p.strip()]

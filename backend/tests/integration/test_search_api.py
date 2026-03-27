@@ -10,16 +10,8 @@ class TestSearchEndpoint:
         assert response.status_code == 401
 
     def test_search_returns_results_structure(self, client, auth_headers,
-                                              db, test_recipe):
-        # Build tsvector for the test recipe
-        db.execute(text("""
-            UPDATE recipes SET search_vector =
-                setweight(to_tsvector('english', coalesce(name, '')), 'A') ||
-                setweight(to_tsvector('english', coalesce(ingredients, '')), 'B')
-            WHERE id = :id
-        """), {"id": test_recipe.id})
-        db.commit()
-
+                                          db, test_recipe):
+        # Skip building tsvector — SQLite uses LIKE fallback, search_vector not needed
         response = client.get(
             "/api/search/",
             params={"q": "chicken"},
