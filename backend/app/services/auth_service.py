@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 import os
+import bcrypt
 
 pwd_context    = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme  = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -18,10 +19,10 @@ EXPIRE_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
 # ── password helpers ──────────────────────────────────────────────────────────
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 # ── JWT helpers ───────────────────────────────────────────────────────────────
 
