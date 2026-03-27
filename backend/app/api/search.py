@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.services.auth_service import get_current_user
 from app.services.search_service import search_recipes
 from app.services.spell_service import check_query
+from app.services.image_service import cache_image, get_cached_url
 from app.schemas.recipe import RecipeCard, RecipeDetail
 from app.models.recipe import Recipe
+import asyncio
 
 router = APIRouter(prefix="/api/search", tags=["search"])
 
@@ -56,3 +59,31 @@ def get_recipe(
         instructions = recipe.instructions,
     )
     return detail
+
+@router.get("/image-proxy")
+async def image_proxy(
+    url: str     = Query(...),
+    db:  Session = Depends(get_db),
+):
+    """
+    On-demand image proxy.
+    Caches image locally on first request, then redirects to cached version.
+    No auth required — images are public.
+    """
+    cached = get_cached_url(url, size="thumb")
+    if cached != url:
+        # Already cached — redirect to local copy
+        return RedirectResponse(url=cached, status_code=301)
+
+    # Not cached yet — download and cache now
+    result = await cache_image(url)
+    if result:
+        # Update DB so future requests skip this
+        db.query(Recipe).filter(Recipe.image_url == url).update({
+            "image_url": result["thumb"]
+        })
+        db.commit()
+        return RedirectResponse(url=result["thumb"], status_code=301)
+
+    # Fallback — serve original URL
+    return RedirectResponse(url=url, status_code=302)
