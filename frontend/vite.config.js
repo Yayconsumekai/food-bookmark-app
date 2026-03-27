@@ -4,6 +4,14 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
 
+  test: {
+    environment: 'jsdom',         // simulate browser DOM
+    globals:     true,
+    coverage: {
+      reporter: ['text', 'html'],
+    },
+  },
+
   server: {
     proxy: {
       // Proxy all /api and /static requests to FastAPI

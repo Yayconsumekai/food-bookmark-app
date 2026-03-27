@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from app.schemas.recipe import RecipeCard
 
@@ -18,5 +18,4 @@ class BookmarkOut(BaseModel):
     rating:    float
     recipe:    Optional[RecipeCard] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

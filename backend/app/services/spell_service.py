@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from typing import Optional
 import re
 
 # In-memory vocabulary cache — built once on first request
@@ -32,8 +33,7 @@ def edits1(word: str) -> set[str]:
 
 def edits2(word: str) -> set[str]:
     """All strings two edits away — covers most real typos."""
-    return {e2 for e1 in edits1(word) for e2 in edits1(e1) if e2 in _vocabulary}
-
+    return {e2 for e1 in edits1(word) for e2 in edits1(e1)}
 
 def correct_word(word: str) -> Optional[str]:
     """
@@ -51,7 +51,7 @@ def correct_word(word: str) -> Optional[str]:
         return min(candidates_1, key=len)
 
     # Fall back to 2 edits
-    candidates_2 = edits2(w)
+    candidates_2 = {w for w in edits2(w) if w in _vocabulary}
     if candidates_2:
         return min(candidates_2, key=len)
 

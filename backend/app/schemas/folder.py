@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -11,7 +11,6 @@ class FolderUpdate(BaseModel):
 class FolderOut(BaseModel):
     id:             int
     name:           str
-    bookmark_count: Optional[int] = 0   # populated in service layer
+    bookmark_count: Optional[int] = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
