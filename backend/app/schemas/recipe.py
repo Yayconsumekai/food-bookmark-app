@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 from typing import Optional, List
 import re
 
@@ -14,28 +14,19 @@ class RecipeCard(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class RecipeDetail(RecipeCard):
-    description:       Optional[str]
-    keywords:          Optional[str]
+    description:       Optional[str] = None
+    keywords:          Optional[str] = None
+    ingredients:       Optional[str] = None
+    instructions:      Optional[str] = None
     ingredients_list:  List[str] = []
     instructions_list: List[str] = []
 
-    ingredients:  Optional[str] = None
-    instructions: Optional[str] = None
-
-    @field_validator('ingredients_list', mode='before')
-    @classmethod
-    def parse_ingredients(cls, v, info):
-        raw = info.data.get('ingredients', '')
-        if not raw:
-            return []
-        parts = re.split(r',\s*|\s{2,}', raw.strip())
-        return [p.strip() for p in parts if p.strip()]
-
-    @field_validator('instructions_list', mode='before')
-    @classmethod
-    def parse_instructions(cls, v, info):
-        raw = info.data.get('instructions', '')
-        if not raw:
-            return []
-        parts = re.split(r'\d+\.\s+|\s{2,}', raw.strip())
-        return [p.strip() for p in parts if p.strip()]
+    @model_validator(mode='after')
+    def parse_lists(self):
+        if self.ingredients:
+            parts = re.split(r',\s*|\s{2,}', self.ingredients.strip())
+            self.ingredients_list = [p.strip() for p in parts if p.strip()]
+        if self.instructions:
+            parts = re.split(r'\d+\.\s+|\s{2,}', self.instructions.strip())
+            self.instructions_list = [p.strip() for p in parts if p.strip()]
+        return self

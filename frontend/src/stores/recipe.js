@@ -21,6 +21,16 @@ export const useRecipeStore = defineStore('recipe', {
       this.error   = null
       try {
         const { data } = await api.get(`/api/search/recipe/${id}`)
+      
+        // Parse string fields into arrays for the modal
+        data.ingredients_list = data.ingredients
+          ? data.ingredients.split('\n').map(s => s.trim()).filter(Boolean)
+          : []
+      
+        data.instructions_list = data.instructions
+          ? data.instructions.split('\n').map(s => s.trim()).filter(Boolean)
+          : []
+      
         this.cache[id]      = data
         this.selectedRecipe = data
       } catch (e) {

@@ -36,26 +36,19 @@ def edits2(word: str) -> set[str]:
     return {e2 for e1 in edits1(word) for e2 in edits1(e1)}
 
 def correct_word(word: str) -> Optional[str]:
-    """
-    Return best spelling suggestion for a word, or None if word looks correct.
-    Priority: exact match → 1-edit match → 2-edit match
-    """
     w = word.lower()
     if w in _vocabulary:
-        return None  # word is fine, no correction needed
+        return None
 
-    # Find candidates within 1 edit that exist in vocabulary
-    candidates_1 = {w for w in edits1(w) if w in _vocabulary}
+    candidates_1 = {c for c in edits1(w) if c in _vocabulary}
     if candidates_1:
-        # Pick most "common" — approximate by shortest (heuristic)
         return min(candidates_1, key=len)
 
-    # Fall back to 2 edits
-    candidates_2 = {w for w in edits2(w) if w in _vocabulary}
+    candidates_2 = {c for c in edits2(w) if c in _vocabulary}
     if candidates_2:
         return min(candidates_2, key=len)
 
-    return None  # no suggestion found
+    return None
 
 
 def check_query(query: str, db: Session) -> dict:

@@ -5,8 +5,6 @@ import RegisterView from '../views/RegisterView.vue'
 import HomeView      from '../views/HomeView.vue'
 import SearchView    from '../views/SearchView.vue'
 import BookmarksView from '../views/BookmarksView.vue'
-import LoginView     from '../views/LoginView.vue'
-import RegisterView  from '../views/RegisterView.vue'
 
 const routes = [
     { path: '/login',     component: LoginView },

@@ -45,8 +45,13 @@ def get_personalised(db: Session, user_id: int, limit: int = 10) -> List[dict]:
     if not terms:
         return get_top_rated(db, limit=limit)
 
-    tsquery = " | ".join(list(terms)[:15])   # OR query — broader matching
-
+    import re
+    clean_terms = [re.sub(r'[^a-zA-Z0-9]', '', t) for t in terms if re.match(r'^[a-zA-Z]', t)]
+    clean_terms = [t for t in clean_terms if len(t) >= 2]
+    if not clean_terms:
+        return get_top_rated(db, limit=limit)
+    tsquery = " | ".join(clean_terms[:15])
+    
     sql = text("""
         SELECT
             id, name, image_url, category,
