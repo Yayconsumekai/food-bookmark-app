@@ -3,27 +3,31 @@ import api from '../api/index.js'
 
 export const useSearchStore = defineStore('search', {
   state: () => ({
-    query:       '',
-    results:     [],
-    total:       0,
-    loading:     false,
-    error:       null,
-    // spell correction state
-    spellResult: null,   // { has_corrections, original, corrected, corrections }
+    query:             '',
+    results:           [],
+    total:             0,
+    facets:            null,    // ← add
+    loading:           false,
+    error:             null,
+    expansion:         null,
+    spellResult:       null,
     pendingCorrection: false,
   }),
 
   actions: {
     async search(q, offset = 0) {
-      this.loading = true
-      this.error   = null
+      this.loading   = true
+      this.error     = null
+      this.expansion = null
       try {
         const { data } = await api.get('/api/search/', {
           params: { q, limit: 20, offset }
         })
-        this.results = data.results
-        this.total   = data.total
-        this.query   = q
+        this.results   = data.results
+        this.total     = data.total
+        this.expansion = data.expansion
+        this.facets    = data.facets    // ← add
+        this.query     = q
       } catch (e) {
         this.error = e.response?.data?.detail || 'Search failed'
       } finally {
@@ -39,6 +43,31 @@ export const useSearchStore = defineStore('search', {
         return data
       } catch {
         return null
+      }
+    },
+
+    async searchWithFilters(q, filters = {}) {
+      this.loading = true
+      this.error   = null
+      try {
+        const params = {
+          q,
+          limit: 20,
+          offset: 0,
+          ...(filters.category   && { category:    filters.category }),
+          ...(filters.minRating  && { min_rating:  filters.minRating }),
+          ...(filters.maxMinutes && { max_minutes: filters.maxMinutes }),
+        }
+        const { data } = await api.get('/api/search/', { params })
+        this.results   = data.results
+        this.total     = data.total
+        this.expansion = data.expansion
+        this.facets    = data.facets      // ← add
+        this.query     = q
+      } catch (e) {
+        this.error = e.response?.data?.detail || 'Search failed'
+      } finally {
+        this.loading = false
       }
     },
 
