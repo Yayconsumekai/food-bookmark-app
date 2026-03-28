@@ -65,25 +65,31 @@ async def image_proxy(
     url: str     = Query(...),
     db:  Session = Depends(get_db),
 ):
-    """
-    On-demand image proxy.
-    Caches image locally on first request, then redirects to cached version.
-    No auth required — images are public.
-    """
+    from fastapi.responses import RedirectResponse, Response
+
+    # If URL is null/empty return 404 immediately
+    if not url or url == "null":
+        return Response(status_code=404)
+
+    # Already a local cached file — serve directly
     cached = get_cached_url(url, size="thumb")
     if cached != url:
-        # Already cached — redirect to local copy
         return RedirectResponse(url=cached, status_code=301)
 
-    # Not cached yet — download and cache now
+    # Try to cache on demand
     result = await cache_image(url)
     if result:
-        # Update DB so future requests skip this
         db.query(Recipe).filter(Recipe.image_url == url).update({
             "image_url": result["thumb"]
         })
         db.commit()
         return RedirectResponse(url=result["thumb"], status_code=301)
 
-    # Fallback — serve original URL
-    return RedirectResponse(url=url, status_code=302)
+    # URL is dead — null it out so we don't retry next time
+    db.query(Recipe).filter(Recipe.image_url == url).update({
+        "image_url": None
+    })
+    db.commit()
+
+    # Return 404 so LazyImage shows fallback emoji
+    return Response(status_code=404)

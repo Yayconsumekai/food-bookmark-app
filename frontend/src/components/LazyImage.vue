@@ -17,29 +17,43 @@
 </template>
   
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
-    src: { type: String, default: '' },
-    alt: { type: String, default: '' },
-    fallback: { type: String, default: '🍽️' },
-    aspectRatio: { type: String, default: '4/3' },
-    proxy: { type: Boolean, default: true },   // use backend proxy
+  src:         { type: String, default: '' },
+  alt:         { type: String, default: '' },
+  fallback:    { type: String, default: '🍽️' },
+  aspectRatio: { type: String, default: '4/3' },
+  proxy:       { type: Boolean, default: true },
 })
 
-const loaded = ref(false)
-const error = ref(false)
-const imgRef = ref(null)
+const loaded  = ref(false)
+const error   = ref(false)
 
-// Route through our image proxy for on-demand caching
 const proxiedSrc = computed(() => {
-    if (!props.src || !props.proxy) return props.src
-    if (props.src.includes('/static/images/')) return props.src
-    return `/api/search/image-proxy?url=${encodeURIComponent(props.src)}`  // ← relative URL
+  if (!props.src || !props.proxy) return props.src
+  if (props.src.includes('/static/images/')) return props.src
+  return `/api/search/image-proxy?url=${encodeURIComponent(props.src)}`
 })
 
-function onLoad() { loaded.value = true }
-function onError() { error.value = true }
+// Reset state when src changes (e.g. navigating between recipes)
+watch(() => props.src, () => {
+  loaded.value = false
+  error.value  = false
+})
+
+function onLoad(e) {
+  // Guard against 1x1 placeholder images that some sites serve for 404s
+  if (e.target.naturalWidth < 10 || e.target.naturalHeight < 10) {
+    error.value = true
+    return
+  }
+  loaded.value = true
+}
+
+function onError() {
+  error.value = true
+}
 </script>
   
 <style scoped>
