@@ -51,7 +51,7 @@ def get_personalised(db: Session, user_id: int, limit: int = 10) -> List[dict]:
     if not clean_terms:
         return get_top_rated(db, limit=limit)
     tsquery = " | ".join(clean_terms[:15])
-    
+
     sql = text("""
         SELECT
             id, name, image_url, category,
@@ -64,6 +64,7 @@ def get_personalised(db: Session, user_id: int, limit: int = 10) -> List[dict]:
             search_vector @@ query
             AND id != ALL(:excluded)
             AND rating IS NOT NULL
+            AND image_url IS NOT NULL
         ORDER BY
             (ts_rank_cd(search_vector, query) * 0.4 + COALESCE(rating, 0) * 0.12) DESC
         LIMIT :limit
@@ -85,6 +86,7 @@ def get_by_category(db: Session, category: str, limit: int = 10) -> List[dict]:
     rows = (
         db.query(Recipe)
         .filter(Recipe.category.ilike(f"%{category}%"))
+        .filter(Recipe.image_url.isnot(None))
         .filter(Recipe.rating.isnot(None))
         .order_by(Recipe.rating.desc())
         .limit(limit)

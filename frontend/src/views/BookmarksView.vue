@@ -33,7 +33,7 @@
                 </div>
 
                 <div v-else class="bookmark-grid">
-                    <div v-for="bm in sortedBookmarks" :key="bm.id" class="bookmark-card">
+                    <div v-for="bm in sortedBookmarks.filter(b => b.recipe?.image_url)" :key="bm.id" class="bookmark-card">
                         <div class="bm-image" @click="openRecipe(bm.recipe_id)">
                             <LazyImage :src="bm.recipe?.image_url" :alt="bm.recipe?.name" aspect-ratio="4/3" />
                         </div>

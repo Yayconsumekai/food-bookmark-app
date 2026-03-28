@@ -13,7 +13,7 @@
   
       <div v-else-if="search.results.length" class="card-grid">
         <RecipeCard
-          v-for="r in search.results"
+          v-for="r in search.results.filter(r => r.image_url)"
           :key="r.id"
           :recipe="r"
           @select="openRecipe(r.id)"

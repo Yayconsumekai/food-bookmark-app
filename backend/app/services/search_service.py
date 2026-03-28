@@ -50,6 +50,7 @@ def search_recipes(
             SELECT COUNT(*) FROM recipes,
                 to_tsquery('english', :tsquery) query
             WHERE search_vector @@ query
+            AND image_url IS NOT NULL
         """)
         rows  = db.execute(sql, {"tsquery": tsquery, "limit": limit, "offset": offset}).fetchall()
         total = db.execute(count_sql, {"tsquery": tsquery}).scalar()
