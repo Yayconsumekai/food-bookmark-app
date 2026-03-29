@@ -1,12 +1,26 @@
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.services.query_expansion_service import build_expanded_tsquery
+from typing import Optional
+import re
+
+
+def build_tsquery(query: str) -> str:
+    words = re.findall(r'[a-zA-Z0-9]+', query.lower())
+    if not words:
+        return None
+    return " & ".join(words)
+
+
 def search_recipes(
     db:          Session,
     query:       str,
     limit:       int   = 20,
     offset:      int   = 0,
     expand:      bool  = True,
-    category:    str   = None,    # ← new
-    min_rating:  float = None,    # ← new
-    max_minutes: int   = None,    # ← new
+    category:    str   = None,
+    min_rating:  float = None,
+    max_minutes: int   = None,
 ) -> dict:
     if expand:
         tsquery, expansion = build_expanded_tsquery(query)
@@ -17,21 +31,18 @@ def search_recipes(
     if not tsquery:
         return {"results": [], "total": 0, "expansion": None, "facets": {}}
 
-    # Build facet filter clauses
     facet_clauses = "AND image_url IS NOT NULL"
     params        = {"tsquery": tsquery, "limit": limit, "offset": offset}
 
     if category:
-        facet_clauses     += " AND category ILIKE :category"
-        params["category"] = f"%{category}%"
+        facet_clauses      += " AND category ILIKE :category"
+        params["category"]  = f"%{category}%"
 
     if min_rating is not None:
         facet_clauses        += " AND rating >= :min_rating"
         params["min_rating"]  = min_rating
 
     if max_minutes is not None:
-        # total_time is stored as "1h 30m" — convert to minutes for comparison
-        # We store a computed minutes column approach using a simple filter
         facet_clauses          += " AND total_minutes <= :max_minutes"
         params["max_minutes"]   = max_minutes
 
@@ -60,8 +71,6 @@ def search_recipes(
 
     rows  = db.execute(sql,       params).fetchall()
     total = db.execute(count_sql, params).scalar()
-
-    # Build facet counts for the sidebar
     facets = _get_facets(db, tsquery)
 
     return {
@@ -73,7 +82,6 @@ def search_recipes(
 
 
 def _get_facets(db: Session, tsquery: str) -> dict:
-    """Get category counts and rating distribution for facet sidebar."""
     category_sql = text("""
         SELECT category, COUNT(*) as count
         FROM recipes,
@@ -81,9 +89,10 @@ def _get_facets(db: Session, tsquery: str) -> dict:
         WHERE search_vector @@ query
           AND image_url IS NOT NULL
           AND category IS NOT NULL
+          AND category != ''
         GROUP BY category
         ORDER BY count DESC
-        LIMIT 10
+        LIMIT 50                        
     """)
 
     rating_sql = text("""

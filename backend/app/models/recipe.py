@@ -28,6 +28,7 @@ class Recipe(Base):
     image_url       = Column(String)
     rating          = Column(Float)
     total_time      = Column(String)
+    total_minutes = Column(Integer, nullable=True, index=True)
     calories        = Column(Float)
 
     # Works as TSVECTOR on PostgreSQL, Text on SQLite (tests)

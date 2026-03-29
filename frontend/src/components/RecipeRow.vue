@@ -80,14 +80,9 @@ defineEmits(['select'])
 
 /* Horizontal scroll container */
 .row-scroll {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 200px;
-    gap: 1rem;
-    overflow-x: auto;
-    padding-bottom: 0.75rem;
-    scrollbar-width: thin;
-    scrollbar-color: #e0e0e0 transparent;
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap:                   1rem;
 }
 
 .row-scroll::-webkit-scrollbar {
