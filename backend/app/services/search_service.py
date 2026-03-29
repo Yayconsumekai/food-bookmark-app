@@ -1,80 +1,121 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.models.recipe import Recipe
-from typing import Optional, List
+from app.services.query_expansion_service import build_expanded_tsquery
+from typing import Optional
 import re
 
+
 def build_tsquery(query: str) -> str:
-    """
-    Convert a plain search string into a PostgreSQL tsquery.
-    e.g. 'chicken garlic soup' → 'chicken & garlic & soup'
-    Strips special characters that would break tsquery syntax.
-    """
     words = re.findall(r'[a-zA-Z0-9]+', query.lower())
     if not words:
         return None
     return " & ".join(words)
 
+
 def search_recipes(
-    db: Session,
-    query: str,
-    limit: int = 20,
-    offset: int = 0,
+    db:          Session,
+    query:       str,
+    limit:       int   = 20,
+    offset:      int   = 0,
+    expand:      bool  = True,
+    category:    str   = None,
+    min_rating:  float = None,
+    max_minutes: int   = None,
 ) -> dict:
-    """
-    Full-text search using PostgreSQL tsvector + GIN index.
-    Falls back to LIKE search for SQLite (used in testing).
-    """
-    tsquery = build_tsquery(query)
-    if not tsquery:
-        return {"results": [], "total": 0}
-
-    dialect = db.get_bind().dialect.name
-
-    if dialect == "postgresql":
-        sql = text("""
-            SELECT
-                id, name, image_url, category,
-                rating, total_time, calories,
-                ts_rank_cd(search_vector, query) AS rank
-            FROM
-                recipes,
-                to_tsquery('english', :tsquery) query
-            WHERE
-                search_vector @@ query
-            ORDER BY rank DESC
-            LIMIT  :limit
-            OFFSET :offset
-        """)
-        count_sql = text("""
-            SELECT COUNT(*) FROM recipes,
-                to_tsquery('english', :tsquery) query
-            WHERE search_vector @@ query
-        """)
-        rows  = db.execute(sql, {"tsquery": tsquery, "limit": limit, "offset": offset}).fetchall()
-        total = db.execute(count_sql, {"tsquery": tsquery}).scalar()
-        results = [dict(row._mapping) for row in rows]
-
+    if expand:
+        tsquery, expansion = build_expanded_tsquery(query)
     else:
-        # SQLite fallback for testing — simple LIKE search
-        words = re.findall(r'[a-zA-Z0-9]+', query.lower())
-        q = db.query(Recipe)
-        for word in words:
-            q = q.filter(
-                Recipe.name.ilike(f"%{word}%") |
-                Recipe.ingredients.ilike(f"%{word}%") |
-                Recipe.keywords.ilike(f"%{word}%")
-            )
-        total   = q.count()
-        recipes = q.offset(offset).limit(limit).all()
-        results = [
-            {
-                "id": r.id, "name": r.name, "image_url": r.image_url,
-                "category": r.category, "rating": r.rating,
-                "total_time": r.total_time, "calories": r.calories,
-                "rank": 0.0,
-            }
-            for r in recipes
-        ]
+        tsquery   = build_tsquery(query)
+        expansion = {"has_expansions": False, "expansions_used": {}}
 
-    return {"results": results, "total": total}
+    if not tsquery:
+        return {"results": [], "total": 0, "expansion": None, "facets": {}}
+
+    facet_clauses = "AND image_url IS NOT NULL"
+    params        = {"tsquery": tsquery, "limit": limit, "offset": offset}
+
+    if category:
+        facet_clauses      += " AND category ILIKE :category"
+        params["category"]  = f"%{category}%"
+
+    if min_rating is not None:
+        facet_clauses        += " AND rating >= :min_rating"
+        params["min_rating"]  = min_rating
+
+    if max_minutes is not None:
+        facet_clauses          += " AND total_minutes <= :max_minutes"
+        params["max_minutes"]   = max_minutes
+
+    sql = text(f"""
+        SELECT
+            id, name, image_url, category,
+            rating, total_time, calories,
+            ts_rank_cd(search_vector, query) AS rank
+        FROM
+            recipes,
+            to_tsquery('english', :tsquery) query
+        WHERE
+            search_vector @@ query
+            {facet_clauses}
+        ORDER BY rank DESC
+        LIMIT  :limit
+        OFFSET :offset
+    """)
+
+    count_sql = text(f"""
+        SELECT COUNT(*) FROM recipes,
+            to_tsquery('english', :tsquery) query
+        WHERE search_vector @@ query
+        {facet_clauses}
+    """)
+
+    rows  = db.execute(sql,       params).fetchall()
+    total = db.execute(count_sql, params).scalar()
+    facets = _get_facets(db, tsquery)
+
+    return {
+        "results":   [dict(r._mapping) for r in rows],
+        "total":     total,
+        "expansion": expansion if expansion["has_expansions"] else None,
+        "facets":    facets,
+    }
+
+
+def _get_facets(db: Session, tsquery: str) -> dict:
+    category_sql = text("""
+        SELECT category, COUNT(*) as count
+        FROM recipes,
+             to_tsquery('english', :tsquery) query
+        WHERE search_vector @@ query
+          AND image_url IS NOT NULL
+          AND category IS NOT NULL
+          AND category != ''
+        GROUP BY category
+        ORDER BY count DESC
+        LIMIT 50                        
+    """)
+
+    rating_sql = text("""
+        SELECT
+            CASE
+                WHEN rating >= 4.5 THEN '4.5+'
+                WHEN rating >= 4.0 THEN '4.0+'
+                WHEN rating >= 3.0 THEN '3.0+'
+                ELSE 'Any'
+            END as band,
+            COUNT(*) as count
+        FROM recipes,
+             to_tsquery('english', :tsquery) query
+        WHERE search_vector @@ query
+          AND image_url IS NOT NULL
+        GROUP BY band
+        ORDER BY band DESC
+    """)
+
+    categories = db.execute(category_sql, {"tsquery": tsquery}).fetchall()
+    ratings    = db.execute(rating_sql,   {"tsquery": tsquery}).fetchall()
+
+    return {
+        "categories": [{"name": r.category, "count": r.count} for r in categories],
+        "ratings":    [{"band": r.band,     "count": r.count} for r in ratings],
+    }

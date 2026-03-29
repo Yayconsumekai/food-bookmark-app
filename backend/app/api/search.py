@@ -15,15 +15,23 @@ router = APIRouter(prefix="/api/search", tags=["search"])
 
 @router.get("/")
 def search(
-    q:      str            = Query(..., min_length=1),
-    limit:  int            = Query(20, ge=1, le=100),
-    offset: int            = Query(0,  ge=0),
-    db:     Session        = Depends(get_db),
-    _:      User           = Depends(get_current_user),   # must be logged in
+    q:           str     = Query(..., min_length=1),
+    limit:       int     = Query(20, ge=1, le=100),
+    offset:      int     = Query(0,  ge=0),
+    category:    str     = Query(None),
+    min_rating:  float   = Query(None),
+    max_minutes: int     = Query(None),
+    db:          Session = Depends(get_db),
+    _:           User    = Depends(get_current_user),
 ):
-    results = search_recipes(db, q, limit=limit, offset=offset)
-    return results
-
+    return search_recipes(
+        db, q,
+        limit=limit,
+        offset=offset,
+        category=category,
+        min_rating=min_rating,
+        max_minutes=max_minutes,
+    )
 
 @router.get("/spell-check")
 def spell_check(

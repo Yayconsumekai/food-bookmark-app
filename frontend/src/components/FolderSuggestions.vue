@@ -13,7 +13,7 @@
         </div>
 
         <!-- Loading -->
-        <div v-if="loading" class="row-scroll">
+        <div v-if="loading" class="suggest-grid">
             <div v-for="n in 6" :key="n" class="skeleton-card" />
         </div>
 
@@ -23,7 +23,7 @@
         </div>
 
         <!-- Suggestion cards -->
-        <div v-else class="row-scroll">
+        <div v-else class="suggest-grid">
             <div v-for="recipe in suggestions" :key="recipe.id" class="suggest-card" @click="$emit('select', recipe.id)">
                 <div class="card-img">
                     <LazyImage :src="recipe.image_url" :alt="recipe.name" aspect-ratio="3/2" />
@@ -99,14 +99,10 @@ defineEmits(['refresh', 'select'])
     cursor: default;
 }
 
-.row-scroll {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 180px;
-    gap: 0.85rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    scrollbar-width: thin;
+.suggest-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap:                   0.85rem;
 }
 
 .suggest-card {

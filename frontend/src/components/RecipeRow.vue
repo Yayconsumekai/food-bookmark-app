@@ -20,7 +20,8 @@
 
         <!-- Cards -->
         <div v-else class="row-scroll">
-            <div v-for="recipe in recipes" :key="recipe.id" class="row-card" @click="$emit('select', recipe.id)">
+            <div v-for="recipe in recipes.filter(r => r.image_url)" :key="recipe.id" class="row-card"
+                @click="$emit('select', recipe.id)">
                 <div class="card-img">
                     <LazyImage :src="recipe.image_url" :alt="recipe.name" aspect-ratio="3/2" />
                     <span v-if="recipe.similarity" class="similarity-badge">
@@ -79,14 +80,9 @@ defineEmits(['select'])
 
 /* Horizontal scroll container */
 .row-scroll {
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 200px;
-    gap: 1rem;
-    overflow-x: auto;
-    padding-bottom: 0.75rem;
-    scrollbar-width: thin;
-    scrollbar-color: #e0e0e0 transparent;
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap:                   1rem;
 }
 
 .row-scroll::-webkit-scrollbar {
@@ -114,7 +110,10 @@ defineEmits(['select'])
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
-.card-img      { overflow: hidden; position: relative; }
+.card-img {
+    overflow: hidden;
+    position: relative;
+}
 
 .card-img img {
     width: 100%;
@@ -191,4 +190,5 @@ defineEmits(['select'])
     color: #aaa;
     font-size: 0.9rem;
     padding: 1rem 0;
-}</style>
+}
+</style>
